@@ -29,20 +29,20 @@ app.configure ->
   app.use express.static(path.join(__dirname, 'public'))
 
 # Minify JS and CSS
-new compressor.minify {
-  type: 'uglifyjs',
-  fileIn: 'assets/js/fBomb.js',
-  fileOut: 'public/js/fBomb.min.js',
-  callback: (err) ->  if err
-    console.log 'minify: ' + err
-  }
-new compressor.minify {
-  type: 'yui-css',
-  fileIn: 'public/css/add2home.css',
-  fileOut: 'public/css/add2home.min.css',
-  callback: (err) ->  if err
-    console.log 'minify: ' + err
-  }
+#new compressor.minify {
+#  type: 'uglifyjs',
+#  fileIn: 'assets/js/fBomb.js',
+#  fileOut: 'public/js/fBomb.min.js',
+#  callback: (err) ->  if err
+#    console.log 'minify: ' + err
+#  }
+#new compressor.minify {
+#  type: 'yui-css',
+#  fileIn: 'public/css/add2home.css',
+#  fileOut: 'public/css/add2home.min.css',
+#  callback: (err) ->  if err
+#    console.log 'minify: ' + err
+#  }
 
 # Dev config
 app.configure 'development', ->
@@ -92,8 +92,15 @@ startStream = ->
 
   # Logic to handle tweets
   stream.on 'tweet', (tweet) ->
-    retweet tweet.user.screen_name, tweet.id_str, tweet.user.followers_count
+    # if block handles the 'pics_only' config var
+    if config.pics_only && (!tweet.entities.media || !tweet.entities.media[0].media_url)
+      console.log 'early return'
+      return
+    # if block handles the 'retweets' config var
+    if config.retweets
+      retweet tweet.user.screen_name, tweet.id_str, tweet.user.followers_count
     tweetData = undefined
+    # process tweet with coords
     if tweet.coordinates
       tweetData =
         username: tweet.user.screen_name
@@ -103,7 +110,12 @@ startStream = ->
         coordinates: tweet.coordinates.coordinates
         profile_img: tweet.user.profile_image_url
       tweetData['media_url'] = tweet.entities.media[0].media_url if tweet.entities.media
-      wss.broadcast JSON.stringify tweetData
+      if tweetData['media_url']
+        wss.broadcast JSON.stringify tweetData
+        console.log 'picture: ' + if tweet.entities.media then tweet.entities.media[0].media_url else ''
+      else
+        console.log 'non-picture'
+    # process tweet with just a place
     else if tweet.place
       if tweet.place.bounding_box
         if tweet.place.bounding_box.type is 'Polygon'
@@ -116,15 +128,18 @@ startStream = ->
                 coordinates: center
                 profile_img: tweet.user.profile_image_url
             tweetData['media_url'] = tweet.entities.media[0].media_url if tweet.entities.media
-            wss.broadcast JSON.stringify tweetData
+            if tweetData['media_url']
+              wss.broadcast JSON.stringify tweetData
+              console.log 'picture: ' + if tweet.entities.media then tweet.entities.media[0].media_url else ''
+            else
+              console.log 'non-picture'
         else
           console.log 'WTF Place: ' + util.inspect tweet.place
       else
         console.log 'Place without bounding_box: ' + util.inspect tweet.place
-
   # Twitter Error handling
   stream.on 'limit', (limitMessage) ->
-    console.log 'mgingras (limit): ' + limitMessage.limit.track
+    console.log 'author (limit): ' + limitMessage.limit.track
   stream.on 'warning', (warning) ->
     console.log 'mgingras (warning): ' + warning.warning.code + ' : ' + warning.warning.message
   stream.on 'disconnect', (disconnectMessage) ->
@@ -151,12 +166,14 @@ centerPoint = (coords, callback) ->
 limit = 0
 
 # Reset the limit of retweets every 10 minutes
-setInterval ->
-    limit=1
-  , 600000
+if config.retweets
+  setInterval ->
+      limit=1
+    , 600000
 
 
 # Retweet logic
+###
 retweet = (screen_name, tweetID, followers) ->
   if limit isnt 0 && retweets.length > 0
     limit--
@@ -177,9 +194,12 @@ retweet = (screen_name, tweetID, followers) ->
         tweetID: tweetID
         followers: followers
       retweets.push tweetData
+###
 
 # Routes
-app.get '/', routes.index
+app.get '/', (request, response) ->
+  response.redirect '/us/'
+app.get '/us', routes.index
 
 # Error handling
 process.on 'uncaughtException', (err) ->
