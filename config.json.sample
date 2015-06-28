@@ -1,0 +1,11 @@
+{
+  "app_name": "APP TITLE",
+  "track": "WORDS,TO,TRACK",
+  "pics_only": true,
+  "retweets": false,
+  "consumer_key": "CONSUMER_KEY",
+  "consumer_secret": "CONSUMER_SECRET",
+  "oauth_token": "OATH_TOKEN",
+  "oauth_token_secret": "OAUTH_TOKEN_SECRET",
+  "gmaps": "GMAPS_BROWSER_APPLICATION_API_KEY"
+}

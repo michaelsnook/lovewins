@@ -21,10 +21,11 @@ $ git clone https://github.com/michaelsnook/lovewins.git && cd lovewins && npm i
 
 For this application you need to get the API keys for Twitter [https://dev.twitter.com](https://dev.twitter.com) and Google Maps. These are then inserted into config.json . You can also specify the title you want your application to have in this file.
 
-Below is the current config.json file. replace the values with your API keys and configurations.
+Below is the current config.json.sample file. Rename it to `config.json` and replace the values with your API keys and configuration choices.
 
 ```json
 {
+  "app_name": "APP TITLE",
   "track": "WORDS,TO,TRACK",
   "pics_only": true,
   "retweets": false,
@@ -32,8 +33,7 @@ Below is the current config.json file. replace the values with your API keys and
   "consumer_secret": "CONSUMER_SECRET",
   "oauth_token": "OATH_TOKEN",
   "oauth_token_secret": "OAUTH_TOKEN_SECRET",
-  "gmaps": "GMAPS_BROWSER_APPLICATION_KEY",
-  "app_name": "APP_TITLE"
+  "gmaps": "GMAPS_BROWSER_APPLICATION_API_KEY"
 }
 ```
 
